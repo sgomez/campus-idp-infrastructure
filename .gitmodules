@@ -1,0 +1,3 @@
+[submodule "ClientCampusIdP"]
+	path = docker/gui/ClientCampusIdP
+	url = https://github.com/GEANT/ClientCampusIdP.git

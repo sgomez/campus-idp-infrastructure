@@ -1,0 +1,11 @@
+version: "3.6"
+
+services:
+  gui:
+    build:
+      context: docker/gui/
+    image: campusidp-gui:latest
+    ports:
+      - target: 3000
+        published: 8000
+        mode: host
