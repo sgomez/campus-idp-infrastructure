@@ -6,6 +6,11 @@ x-rabbitmq-variables: &rabbitmq-variables
   RABBITMQ_ERLANG_COOKIE: "!ChangeMe!"
   RABBITMQ_DEFAULT_VHOST: "/"
 
+x-mongodb-variables: &mongodb-variables
+  MONGO_INITDB_DATABASE: "idpapi"
+  MONGO_INITDB_ROOT_USERNAME: "admin"
+  MONGO_INITDB_ROOT_PASSWORD: "!ChangeMe!"
+
 services:
   gui:
     build:
@@ -28,3 +33,18 @@ services:
       - target: 5672
         published: 5672
         mode: host
+
+  mongodb:
+    image: mongo:4.0
+    environment: *mongodb-variables
+    volumes:
+      - data:/data/db
+    ports:
+      - target: 27017
+        published: 27017
+        protocol: tcp
+        mode: host
+
+volumes:
+  data:
+    driver: local
