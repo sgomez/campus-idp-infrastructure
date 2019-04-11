@@ -1,5 +1,11 @@
 version: "3.6"
 
+x-rabbitmq-variables: &rabbitmq-variables
+  RABBITMQ_DEFAULT_USER: "admin"
+  RABBITMQ_DEFAULT_PASS: "!ChangeMe!"
+  RABBITMQ_ERLANG_COOKIE: "!ChangeMe!"
+  RABBITMQ_DEFAULT_VHOST: "/"
+
 services:
   gui:
     build:
@@ -8,4 +14,17 @@ services:
     ports:
       - target: 3000
         published: 8000
+        mode: host
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      <<: *rabbitmq-variables
+      RABBITMQ_USE_LONGNAME: "false"
+    ports:
+      - target: 15672
+        published: 8080
+        mode: host
+      - target: 5672
+        published: 5672
         mode: host
