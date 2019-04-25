@@ -10,6 +10,8 @@ x-mongodb-variables: &mongodb-variables
   MONGO_INITDB_DATABASE: "idpapi"
   MONGO_INITDB_ROOT_USERNAME: "admin"
   MONGO_INITDB_ROOT_PASSWORD: "!ChangeMe!"
+  ME_CONFIG_MONGODB_ADMINUSERNAME: "admin"
+  ME_CONFIG_MONGODB_ADMINPASSWORD: "!ChangeMe!"
 
 x-api-variables: &api-variables
   SERVERNAME: "api"
@@ -60,16 +62,27 @@ services:
         published: 5672
         mode: host
 
-  mongodb:
+  mongo:
     image: mongo:4.0
-    environment: *mongodb-variables
+    environment:
+      <<: *mongodb-variables
+      <<: *api-variables
     volumes:
       - data:/data/db
+      - ./docker/mongo:/docker-entrypoint-initdb.d
     ports:
       - target: 27017
         published: 27017
         protocol: tcp
         mode: host
+
+  mongo-express:
+    image: mongo-express
+    environment:
+      <<: *mongodb-variables
+    restart: always
+    ports:
+      - 8081:8081
 
 volumes:
   data:
