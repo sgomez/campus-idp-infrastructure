@@ -1,3 +1,7 @@
-[submodule "ClientCampusIdP"]
+[submodule "docker/gui/ClientCampusIdP"]
 	path = docker/gui/ClientCampusIdP
-	url = https://github.com/GEANT/ClientCampusIdP.git
+	url = https://github.com/sgomez/ClientCampusIdP.git
+	branch = env-file
+[submodule "docker/api/APICampusIdP"]
+	path = docker/api/APICampusIdP
+	url = https://github.com/sgomez/APICampusIdP.git
