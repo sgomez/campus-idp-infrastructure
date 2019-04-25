@@ -11,6 +11,11 @@ x-mongodb-variables: &mongodb-variables
   MONGO_INITDB_ROOT_USERNAME: "admin"
   MONGO_INITDB_ROOT_PASSWORD: "!ChangeMe!"
 
+x-api-variables: &api-variables
+  SERVERNAME: "api"
+  MONGO_IDPAPI_USERNAME: "idpapi"
+  MONDO_IDPAPI_PASSWORD: "!ChangeMe!"
+
 services:
   gui:
     build:
@@ -21,6 +26,27 @@ services:
         published: 8000
         mode: host
 
+  api:
+    hostname: api
+    build:
+      context: docker/api
+    image: campusidp-api:latest
+    environment:
+      <<: *rabbitmq-variables
+      <<: *mongodb-variables
+      <<: *api-variables
+    depends_on:
+      - mongo
+      - rabbitmq
+    ports:
+      - target: 2456
+        published: 2456
+        protocol: tcp
+        mode: host
+      - target: 4000
+        published: 4000
+        protocol: tcp
+        mode: host
   rabbitmq:
     image: rabbitmq:3-management
     environment:

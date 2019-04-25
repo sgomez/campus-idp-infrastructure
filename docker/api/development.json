@@ -1,0 +1,38 @@
+{
+  "hostname": "${SERVERNAME}",
+  "application": "campusIDP",
+  "http": {
+    "port": "2456"
+  },
+  "https": {
+    "port": "4000",
+    "cert": "certs/server.crt",
+    "key": "certs/server.key"
+  },
+  "forcehttps": false,
+  "database": {
+    "host": "mongo",
+    "port": "27017",
+    "user": "${MONGO_IDPAPI_USERNAME}",
+    "pass": "${MONDO_IDPAPI_PASSWORD}",
+    "dbname": "${MONGO_INITDB_DATABASE}"
+  },
+  "jwt": {
+    "iss": "https://${SERVERNAME}",
+    "expiresInSeconds": 36000,
+    "alg": "RS256",
+    "secret": "1234",
+    "privateKey": "jwt.key",
+    "publicKey": "jwt.crt",
+    "clockSkew": 120
+  },
+  "x-api-token": "xyz",
+  "contexts": {
+    "serviceconf": "http://geant.org/capusidp/context"
+  },
+  "amq": {
+    "host": "rabbitmq",
+    "user": "${RABBITMQ_DEFAULT_USER}",
+    "password": "${RABBITMQ_DEFAULT_PASS}"
+  }
+}
