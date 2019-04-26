@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+'''
+Custom Dynamic Inventory script for instance a new IdP with Ansible.
+'''
+
+import os
+import sys
+import argparse
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+class CampusIdpInventory(object):
+
+    def __init__(self):
+        self.inventory = {}
+        self.read_cli_args()
+
+        # Called with `--list`.
+        if self.args.list:
+            self.inventory = self.campusidp_inventory()
+        # Called with `--host [hostname]`.
+        elif self.args.host:
+            # Not implemented, since we return _meta info `--list`.
+            self.inventory = self.empty_inventory()
+        # If no groups or vars are present, return empty inventory.
+        else:
+            self.inventory = self.empty_inventory()
+
+        print (json.dumps(self.inventory));
+
+    # Example inventory for testing.
+    def campusidp_inventory(self):
+        return {
+           "Debian-IdP-with-IdM": {
+              "hosts": ["{{ yaml_vals['fqdn'] }}"],
+              "vars": {
+                 "jdk_type": "openjdk",
+                 "files_dir": "/opt/ansible-shibboleth/inventories/files"
+              }
+           },
+           "_meta": {
+              "hostvars": {
+                 "{{ yaml_vals['fqdn'] }}": {
+                    "fqdn": "{{ yaml_vals['fqdn'] }}",
+                    "common": {
+                       "ssl": "True",
+                       "ca": "TERENA_SSL_CA_3.pem",
+                       "ssl_cert": "{{ yaml_vals['fqdn'] }}.crt",
+                       "ssl_key": "{{ yaml_vals['fqdn'] }}.key",
+                       "swap": {
+                          "name_swapfile": "swapfile",
+                          "size_swapfile": "{{ yaml_vals['sys']['swap'] }}",
+                          "state": "present"
+                       },
+                       "mirror": "https://mi.mirror.garr.it/mirrors/debian/",
+                    },
+                    "my_timezone": "{{ yaml_vals['sys']['my_timezone'] }}",
+                    "apache": {
+                       "admin_email": "{% for value in yaml_vals['contacts']['technical'] %}{{ value['email'] }}{% if not loop.last %},{% endif %}{% endfor %}",
+                    },
+                    "ldap": {
+                       "basedn": "dc=aai-test,dc=garr,dc=it",
+                       "domain": "{{ yaml_vals['idp']['scope'][0] }}",
+                       "org": "{{ yaml_vals['idp']['md']['en']['org_name'] }}",
+                       "url": "ldap://{{ yaml_vals['fqdn'] }}:389",
+                       "root_dn": "cn=admin,dc=aai-test,dc=garr,dc=it",
+                       "root_pw": "{{ idp_vals['idp_sealer_pw'] }}",
+                       "create_test_user": "no"
+                    },
+                    "idp_db_restore": "false",
+                    "mysql": {
+                       "root_password": "9630816f279c7a6fd11db68c5cc9119c3a5af69d7b7f64acfd7455760ee1a823"
+                    },
+                   "idp_config": {
+                      "sealer_pw": "O4A4E2ajGiOZd9K4k27dqp8BaXiVqs0/nPBj",
+                      "keystore_pw": "O4A4E2ajGiOZd9K4k27dqp8BaXiVqs0/nPBj",
+                      "shibboleth_db_password": "b3f300bd770c8ababba3a4e59f76ad6951f200292ec3a2b1b49534129e4c76fe",
+                      "scope": "{% for value in yaml_vals['idp']['scope'] %}{{ value }}{% if not loop.last %},{% endif %}{% endfor %}",
+                      "idp_sourceAttribute": "uid",
+                      "idp_persistentId_salt": "9d920487dc976c831a65fbabf2dd455d885abc32ed4c445dce377fb9022b356b",
+                      "ldap": {
+                         "authenticator": "bindSearchAuthenticator",
+                         "url": "ldap://{{ yaml_vals['fqdn'] }}:389",
+                         "useStartTLS": "true",
+                         "useSSL": "false",
+                         "connectTimeout": "3000",
+                         "sslConfig": "certificateTrust",
+                         "trustCertificates": "/etc/ssl/certs/cacert.pem",
+                         "baseDN": "ou=people,dc=aai-test,dc=garr,dc=it",
+                         "subtreeSearch": "true",
+                         "userFilter": "(uid={user})",
+                         "bindDN": "cn=idpuser,ou=system,dc=aai-test,dc=garr,dc=it",
+                         "bindDNCredential": "4725f7acbfc03e5b871136e1e140fea8a76d49a480ddb5ffe78fa847ac43aabc",
+                         "searchFilter": "(uid=$resolutionContext.principal)",
+                         "returnAttributes": "*",
+                         "ppolicy": {
+                            "change_password_url": "{{ url_password_reset }}",
+                         },
+                      },
+                      "fticks": {
+                         "federation": "IDEM GARR AAI",
+                         "alg": "SHA-256",
+                         "salt": "99a1146675f46d7fd172dd694f3ecfdd738d5ccf50f8179ab5fef44775523fa4",
+                         "loghost": "localhost",
+                         "logport": "514"
+                      },
+                      "sup_rs": "yes",
+                      "sup_coco": "yes",
+                   },
+                   "idp_login": {
+                      "create_info_and_pp_pages": "yes",
+                      "footer_text_color": "{{ yaml_vals['web']['footer_text_color'] }}",
+                      "footer_background_color": "{{ yaml_vals['web']['footer_background_color'] }}",
+                      "idp_url_password_reset": "",
+                      "aup": {
+                         "en": {
+                            "aupUrl": "https://www.garr.it/en/acceptable-use-policies"
+                         },
+                         "it": {
+                            "aupUrl": "https://www.garr.it/it/regole-di-utilizzo-della-rete-aup"
+                         }
+                      },
+                      "footer": {
+                      {% for key,val in yaml_vals['idp']['md'].items() %}
+                         "{{ key }}": {
+                            "text": "<p>The <strong>{{ yaml_vals['idp']['md'][key]['mdui_displayName'] }}</strong>, now is a part of <strong>CAMPUS IDP</strong>.</p><p>The credentials to provide access from this authentication system (Identity Provider) are released only to employees and researchers of the institution.</p>"
+                         }{% if not loop.last %},{% endif %}
+                      {% endfor %}
+                      },
+                      "fed_info": {
+                         "edugain": {
+                            "en": {
+                               "name": "eduGAIN Interfederation",
+                               "url": "http://www.geant.org/Services/Trust_identity_and_security/eduGAIN",
+                               "logo": "/images/edugain-logo.png"
+                            },
+                            "it": {
+                               "name": "Interfederazione eduGAIN",
+                               "url": "https://www.idem.garr.it/informazioni-tecniche/283-faq-edugain",
+                               "logo": "/images/edugain-logo.png"
+                            }
+                         },
+                         "federation": {
+                            "en": {
+                               "name": "IDEM GARR AAI",
+                               "url": "http://www.idem.garr.it/en/",
+                               "logo": "/images/federation-logo.png"
+                            },
+                            "it": {
+                               "name": "IDEM GARR AAI",
+                               "url": "http://www.idem.garr.it/",
+                               "logo": "/images/federation-logo.png"
+                            }
+                         }
+                      }
+                   },
+                   "idp_federation_regAuth": "http://www.idem.garr.it/",
+                   "idp_entityID": "{{ yaml_vals['idp']['entityID'] }}",
+                   "idp_metadata": {
+                   {% for key,val in yaml_vals['idp']['md'].items() %}
+                      "{{ key }}": {
+                         "mdui_displayName": "{{ yaml_vals['idp']['md'][key]['mdui_displayName'] }}",
+                         "mdui_description": "Identity provider for {{ yaml_vals['idp']['md'][key]['mdui_displayName'] }} users",
+                         "mdui_infoUrl": "https://{{ yaml_vals['fqdn'] }}/en/info.html",
+                         "mdui_privacyUrl": "https://{{ yaml_vals['fqdn'] }}/en/privacy.html",
+                         "mdui_favicon": "https://{{ yaml_vals['fqdn'] }}/en/favicon.png",
+                         "mdui_logo": "https://{{ yaml_vals['fqdn'] }}/en/logo.png",
+                         "org_name": "{{ yaml_vals['idp']['md'][key]['org_name'] }}",
+                         "org_displayName": "{{ yaml_vals['idp']['md'][key]['org_displayName'] }}",
+                         "org_url": "{{ yaml_vals['idp']['md'][key]['org_displayName']| default('MISSING') }}"
+                      }{% if not loop.last %},{% endif %}
+                   {% endfor %}
+                   },
+                   "idp_contacts": {
+                   {% for key,val in yaml_vals['contacts'].items() %}
+                   {%  if key == "technical" -%}
+                   {%-   for value in val %}
+                      "technical": {
+                         "givenName": "{{ value['name'] }}",
+                         "surName": "Technical Support",
+                         "mail": "{{ value['email'] }}"
+                   {%   endfor %}
+                   {%  elif key == "support" -%}
+                   {%-   for value in val %}     
+                      "support": {
+                         "givenName": "{{ value['name'] }}",
+                         "surName": "User Support",
+                         "mail": "{{ value['email'] }}"
+                   {%   endfor %}
+                   {% endif %}
+                      }{% if not loop.last %},{% endif %}
+                   {% endfor %}
+                   },
+                   "idp_metadata_providers": [
+                   {% for md in yaml_vals['idp']['metadata_providers'] %}
+                    {
+                      "id": "{{ md['id'] }}",
+                      "file": "{{ md['file'] }}",
+                      "url": "{{ md['url'] }}",
+                      "maxValidInterval": "{{ md['maxValidInterval'] }}",
+                      "disregardTLSCertificate": "{{ md['disregardTLSCertificate'] }}",
+                      "pubKey": "{{ md['pubKey']|replace('\n', '\\n') }}"
+                    }
+                   {% if not loop.last %},{% endif %}
+                   {% endfor %}
+                   ],
+                   "idp_stats": {
+                      "fed_name": "{{ yaml_vals['idp']['metadata_providers'][0]['id'] }}",
+                      "fed_md": "{{ yaml_vals['idp']['metadata_providers'][0]['file'] }}",
+                      "fed_site": "https://www.idem.garr.it/",
+                      "db_pw": "5346877926300afd5f4ab722e7f49773ac0465aac2f673a4908a365724291a85"
+                   },
+                   {% raw %}
+                   "pla": {
+                    "orgUrl": "{{ idp_metadata['en']['org_url'] }}",
+                    "easy_idm": "true",
+                    "ldap": {
+                       "basedn": "{{ ldap['basedn'] }}",
+                       "domain": "{{ ldap['domain'] }}",
+                       "org": "{{ ldap['org'] }}",
+                       "url": "{{ ldap['url'] }}",
+                       "root_dn": "{{ ldap['root_dn'] }}",
+                       "root_pw": "{{ ldap['root_pw'] }}"
+                    },
+                    "web_gui_user": "idm-admin",
+                    "web_gui_pw": "7a0f7f81df315263"
+                   }
+                   {% endraw %}
+                 }
+              }
+           }
+        }
+
+    # Empty inventory for testing.
+    def empty_inventory(self):
+        return {'_meta': {'hostvars': {}}}
+
+    # Read the command line args passed to the script.
+    def read_cli_args(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--list', action = 'store_true')
+        parser.add_argument('--host', action = 'store')
+        self.args = parser.parse_args()
+
+# Get the inventory.
+CampusIdpInventory()

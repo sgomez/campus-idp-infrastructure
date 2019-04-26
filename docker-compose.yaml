@@ -49,6 +49,19 @@ services:
         published: 4000
         protocol: tcp
         mode: host
+
+  worker:
+    build:
+      context: docker/worker
+    image: campusidp-worker:latest
+    restart: always
+    environment:
+      <<: *rabbitmq-variables
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./logs:/opt/ansible-shibboleth/worker/logs
+
   rabbitmq:
     image: rabbitmq:3-management
     environment:

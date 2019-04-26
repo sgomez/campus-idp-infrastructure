@@ -5,3 +5,12 @@
 [submodule "docker/api/APICampusIdP"]
 	path = docker/api/APICampusIdP
 	url = https://github.com/sgomez/APICampusIdP.git
+[submodule "docker/worker/ansible-shibboleth"]
+	path = docker/worker/ansible-shibboleth
+	url = https://github.com/sgomez/ansible-shibboleth.git
+[submodule "docker/worker/ansible-shibboleth-inventories"]
+	path = docker/worker/ansible-shibboleth-inventories
+	url = https://github.com/sgomez/ansible-shibboleth-inventories.git
+[submodule "docker/worker/ans-idpcloud-utility"]
+	path = docker/worker/ans-idpcloud-utility
+	url = https://github.com/sgomez/ans-idpcloud-utility.git
