@@ -179,19 +179,15 @@ class CampusIdpInventory(object):
                    "idp_contacts": {
                    {% for key,val in yaml_vals['contacts'].items() %}
                    {%  if key == "technical" -%}
-                   {%-   for value in val %}
                       "technical": {
-                         "givenName": "{{ value['name'] }}",
+                         "givenName": "{{ val['name'] }}",
                          "surName": "Technical Support",
-                         "mail": "{{ value['email'] }}"
-                   {%   endfor %}
+                         "mail": "{{ val['email'] }}"
                    {%  elif key == "support" -%}
-                   {%-   for value in val %}     
                       "support": {
-                         "givenName": "{{ value['name'] }}",
+                         "givenName": "{{ val['name'] }}",
                          "surName": "User Support",
-                         "mail": "{{ value['email'] }}"
-                   {%   endfor %}
+                         "mail": "{{ val['email'] }}"
                    {% endif %}
                       }{% if not loop.last %},{% endif %}
                    {% endfor %}

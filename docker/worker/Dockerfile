@@ -5,7 +5,7 @@ RUN wget https://shibboleth.net/downloads/identity-provider/3.3.2/shibboleth-ide
 RUN tar zxvf shibboleth-identity-provider-3.3.2.tar.gz -C /usr/local/src
 RUN rm shibboleth-identity-provider-3.3.2.tar.gz
 
-RUN apk add openssl bash openjdk8
+RUN apk add ansible bash openjdk8 openssl  
 
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
 
